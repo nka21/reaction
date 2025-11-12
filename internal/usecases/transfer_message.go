@@ -11,9 +11,9 @@ import (
 
 // TransferMessageUseCase - メッセージ転送のビジネスロジックを担当する
 type TransferMessageUseCase struct {
-	config           *entities.Config
-	transferMsgMapping map[string]string // 元メッセージID → 転送メッセージID
-	mappingMutex     sync.RWMutex      // マッピング操作の排他制御
+	config             *entities.Config
+	transferMsgMapping map[string]string // 元メッセージID と 転送メッセージID のマッピング
+	mappingMutex       sync.RWMutex      // マッピング操作の排他制御（並行処理を防ぐ）
 }
 
 // NewTransferMessageUseCase - 新しいTransferMessageUseCaseを作成する
