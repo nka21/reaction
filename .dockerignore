@@ -1,0 +1,39 @@
+# Git関連
+.git
+.gitignore
+.github/
+
+# 開発環境
+.devcontainer/
+
+# 環境変数
+.env
+
+# ビルド成果物
+reaction
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# テストキャッシュ
+*.test
+*.out
+coverage.*
+
+# IDE設定
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ドキュメント
+CLAUDE.md
+README.md
+docs/
+
+# その他
+.DS_Store
+Thumbs.db
