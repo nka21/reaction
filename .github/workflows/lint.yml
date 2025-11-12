@@ -19,5 +19,9 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: stable
-      - name: Run make check (fmt-check and lint)
-        run: make check
+      - name: Run format check
+        run: make fmt-check
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest

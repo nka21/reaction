@@ -1,4 +1,4 @@
-.PHONY: help fmt fmt-check lint check fix run build build-prod test clean docker-build
+.PHONY: help fmt fmt-check lint run build build-prod test clean docker-build
 
 # デフォルトターゲット
 help:
@@ -13,7 +13,6 @@ help:
 	@echo "  make fmt          - コードフォーマット (自動修正)"
 	@echo "  make fmt-check    - フォーマットチェック (修正しない)"
 	@echo "  make lint         - 静的解析 (golangci-lint)"
-	@echo "  make check        - フォーマット + 静的解析 (修正しない、CI用)"
 	@echo ""
 	@echo "  [本番用]"
 	@echo "  make build-prod   - 本番用バイナリをビルド (最適化、デバッグ情報なし)"
@@ -49,10 +48,6 @@ lint:
 	fi
 	golangci-lint run ./...
 	@echo "静的解析完了"
-
-# チェック専用 (修正しない、CI用)
-check: fmt-check lint
-	@echo "すべてのチェックが完了しました"
 
 # アプリケーションを実行
 run:
