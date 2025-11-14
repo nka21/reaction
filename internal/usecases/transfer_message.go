@@ -82,3 +82,17 @@ func (uc *TransferMessageUseCase) DeleteTransferredMessage(
 	log.Printf("転送メッセージ %s を削除しました", transferredMsgID)
 	return nil
 }
+
+// IsTransferredMessage - 指定されたメッセージIDが転送メッセージかどうかを判定する
+func (uc *TransferMessageUseCase) IsTransferredMessage(msgID string) bool {
+	uc.mappingMutex.RLock()
+	defer uc.mappingMutex.RUnlock()
+
+	// WHY: transferMsgMappingの値として存在する場合、そのメッセージは転送メッセージ
+	for _, transferredMsgID := range uc.transferMsgMapping {
+		if transferredMsgID == msgID {
+			return true
+		}
+	}
+	return false
+}
