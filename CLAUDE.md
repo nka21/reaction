@@ -19,7 +19,7 @@
 ## アーキテクチャ
 
 ### 採用アーキテクチャ
-クリーンアーキテクチャの軽量版（entities/usecases/interfaces）
+クリーンアーキテクチャ（entities/usecases/handlers/gateways）
 
 ### ディレクトリ構成
 
@@ -36,9 +36,11 @@ reaction-bot/
     ├── entities/                     # エンティティ層
     │   └── config.go                 # 設定とドメインモデル
     ├── usecases/                     # ユースケース層
-    │   └── transfer_message.go       # メッセージ転送のビジネスロジック
-    └── interfaces/                   # インターフェース層
-        └── discord_handler.go        # Discordイベントハンドラー
+    │   └── transfer_message.go       # ビジネスロジック + インターフェース定義
+    ├── handlers/                     # ハンドラー層（Controller）
+    │   └── discord_handler.go        # Discordイベントハンドラー
+    └── gateways/                     # ゲートウェイ層（外部APIとの橋渡し）
+        └── discord_gateway.go        # Discord API実装
 ```
 
 ### 各レイヤーの責務
@@ -48,21 +50,33 @@ reaction-bot/
 - ドメインモデルの定義
 - 環境変数の読み込みとバリデーション
 - 外部ライブラリに依存しない純粋なビジネスルール
+- **依存**: なし（何も知らない）
 
 #### usecases/
 - メッセージ転送のビジネスロジック
-- Discord APIを使ったメッセージ取得・送信
-- 転送メッセージの整形
-- entitiesに依存、interfacesからは独立
+- 外部APIのインターフェース定義（DiscordClient）
+- ビジネスルールの実装
+- **依存**: entities のみ
+- **重要**: 外部ライブラリ（discordgo）に直接依存しない
 
-#### interfaces/
-- Discordイベントのハンドリング
-- 外部ライブラリ（discordgo）とのやり取り
-- usecasesの呼び出し
+#### handlers/（Interface Adapters - Controller）
+- 外部からの入力を受け取る（Discordイベントのハンドリング）
+- UseCaseの呼び出しを統制（orchestrate）
+- イベントをビジネスロジックに変換
+- **依存**: usecases, gateways, entities
+- **役割**: 入力側のアダプター
+
+#### gateways/（Interface Adapters - Gateway）
+- 外部APIとの橋渡し（Discord API実装）
+- usecasesで定義されたインターフェースを実装
+- 外部ライブラリ（discordgo）の具体的な呼び出し
+- **依存**: usecases（インターフェース）, discordgo
+- **役割**: 出力側のアダプター
 
 #### main.go
 - アプリケーションのエントリーポイント
 - 依存関係の注入（DI）
+- 依存関係の組み立て順序: entities → usecases → gateway → handler
 - Discord botの起動とシャットダウン処理
 
 ## 環境変数
@@ -90,7 +104,7 @@ reaction-bot/
 ### Go言語ベストプラクティス
 
 #### 命名規則
-- **パッケージ名**: 小文字、単数形、短く簡潔（`entities`, `usecases`, `interfaces`）
+- **パッケージ名**: 小文字、単数形、短く簡潔（`entities`, `usecases`, `handlers`, `gateways`）
 - **変数名**: キャメルケース、明示的で説明的な名前
   - 一般的で伝わる略語はOK: `cfg`, `msg`, `ch`, `ctx`, `err`, `id`
   - 伝わりにくい略語はNG: `fwdCh`, `rctMap` など

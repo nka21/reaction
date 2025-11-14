@@ -7,24 +7,29 @@ sequenceDiagram
     actor User as ユーザー
     participant Discord as Discord API
     participant Handler as DiscordHandler
+    participant Gateway as DiscordGateway
     participant UseCase as TransferMessageUseCase
     participant Config as Config
 
     User->>Discord: カスタム絵文字リアクションを追加
     Discord->>Handler: MessageReactionAdd イベント
     Handler->>Handler: isTriggerReactionEmoji()<br/>対象絵文字かチェック
-    Handler->>Discord: 元メッセージを取得
-    Discord-->>Handler: メッセージデータ
+    Handler->>Gateway: GetMessage()
+    Gateway->>Discord: 元メッセージを取得
+    Discord-->>Gateway: メッセージデータ
+    Gateway-->>Handler: Message
     Handler->>Handler: getTriggerReactionCount()<br/>重複チェック
     alt 既に転送済み (reactionCount > 1)
         Handler->>Handler: 転送をスキップ
     else 初回のリアクション (reactionCount == 1)
-        Handler->>UseCase: TransferMessage()
+        Handler->>UseCase: TransferMessage(gateway, message)
         UseCase->>Config: 転送先チャンネルID取得
-        UseCase->>Discord: メッセージ転送
-        Discord-->>UseCase: 転送メッセージID
+        UseCase->>Gateway: SendMessageWithReference()
+        Gateway->>Discord: メッセージ転送
+        Discord-->>Gateway: 転送メッセージID
+        Gateway-->>UseCase: 転送メッセージID
         UseCase->>UseCase: transferMsgMapping に保存<br/>(元ID → 転送ID)
-        UseCase->>Handler: 成功
+        UseCase-->>Handler: 成功
     end
 ```
 
@@ -46,6 +51,7 @@ sequenceDiagram
     actor User as ユーザー
     participant Discord as Discord API
     participant Handler as DiscordHandler
+    participant Gateway as DiscordGateway
     participant UseCase as TransferMessageUseCase
 
     User->>Discord: カスタム絵文字リアクションを削除
@@ -57,12 +63,14 @@ sequenceDiagram
     alt まだリアクションが残っている (count > 0)
         Handler->>Handler: 削除をスキップ
     else 全てのリアクションが削除された (count == 0)
-        Handler->>UseCase: DeleteTransferredMessage()
+        Handler->>UseCase: DeleteTransferredMessage(gateway, messageID)
         UseCase->>UseCase: transferMsgMapping から<br/>転送メッセージID取得
-        UseCase->>Discord: 転送メッセージを削除
-        Discord-->>UseCase: 削除完了
+        UseCase->>Gateway: DeleteMessage()
+        Gateway->>Discord: 転送メッセージを削除
+        Discord-->>Gateway: 削除完了
+        Gateway-->>UseCase: 成功
         UseCase->>UseCase: transferMsgMapping から削除
-        UseCase->>Handler: 成功
+        UseCase-->>Handler: 成功
     end
 ```
 
